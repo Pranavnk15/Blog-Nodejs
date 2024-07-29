@@ -1,6 +1,7 @@
 const { createHmac, randomBytes } = require('crypto'); //built in package
 
 const { Schema, model } = require('mongoose');
+const { createTokenForUser } = require('../services/authentication');
 
 const userSchema = new Schema({
     fullName: {
@@ -51,7 +52,7 @@ userSchema.pre('save', function (next) {
 })
 
 //below is a virtual function
-userSchema.static('matchPassword',async function(email, password)  {
+userSchema.static('matchPasswordAndGenerateToken',async function(email, password)  {
     const user = await this.findOne({email});
     if(!user) throw new Error("User not found!");
     console.log(user);
@@ -63,8 +64,10 @@ userSchema.static('matchPassword',async function(email, password)  {
 
     if(hashedPassword !== userProvidedHash) throw new Error("Incorrect Passwowrd")
     //if matched passowrd we will return user object
-    return user;
- 
+    // return user;
+    
+    const token = createTokenForUser(user);
+    return token;
 })
 
 const User = model('user', userSchema);
